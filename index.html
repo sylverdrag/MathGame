@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="main.js" defer></script>
     <script src="jquery-3.7.1.min.js"></script>
+    <link rel="shortcut icon" href="img/iconMath.ico" type="image/x-icon">
   </head>
   <body>
     <div class="main">
@@ -77,13 +78,26 @@
         <div class="question"></div>
         <div class="challenge"></div>
         <div class="answer">
-          <input type="text" name="answer" id="answer" />
-          <input type="button" value="Valider" />
+          <input type="number" name="answer" id="answer" />
+          <div id="checkAnswer" class="button">Valider</div>
         </div>
         <div id="timer">
           <div class="countdown"></div>
         </div>
       </div>
+      <div class="gameComplete">
+        <h1>Game Over!</h1>
+        <ul>
+          <li id="score">Score: </li>
+          <li id="timeBonus">Bonus de temps: </li>
+          <li id="errors">Erreurs: </li>
+          <li id="errorPenalities">Erreurs: </li>
+          <li id="finalScore">Score final: </li>
+          <li id="eval">Bref... </li>
+        </ul>
+        <div class="NewGame button">Nouvelle partie</div>
+        <div class="changePlayer button">Changer de joueur</div>
+        </div>  
       <div id="gameMap">
         <svg
    width="898.24133"

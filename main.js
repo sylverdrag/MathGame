@@ -7,18 +7,25 @@ let player = "";
 let playerScore = 0;
 let gameType = "";
 let difficultyLevel = 1;
-let game;
+var game;
 let index = 0;
+let errors = 0;
+let timeLeft = 0;
 
 let startSound = new Audio('sounds/lambo-start-up-sound.mp3');
 let errorSound = new Audio('sounds/error.mp3');
 let successSound = new Audio("sounds/success.mp3");
 let welldoneSound = new Audio("sounds/success-fanfare-trumpets.mp3");
 let badScoreSound = new Audio("sounds/lostGame.mp3");
+var bg_sound = new Audio('sounds/fast-rocky-loop-275535.mp3');
+bg_sound.volume = 0.2;
+let soundOn = true;
+
 
 $.when($.ready).then(function () {
     // Create a dummy jQuery object to act as an event bus
     const eventBus = $({});
+
 
     // Custom event listeners
     eventBus.on("playerSet", function (event, data) {
@@ -54,36 +61,39 @@ $.when($.ready).then(function () {
         $(".welcome").show(400);
         $(".gameSettings").show(500);
         $("#gameMap").show(500);
+        bg_sound.addEventListener('ended', function () {
+            if (soundOn) {
+                this.currentTime = 0;
+                this.play();
+            }
+        }, false);
+        if (soundOn) {
+            bg_sound.play();
+        }
     });
     $("#wizard").on("click", function () {
         $("#gameSelector option:eq(0)").prop("selected", true);
-        $("#gameMap").hide(200);
-        $(".limits").show();
+        showGameSetting();
     });
     $("#chaumiere").on("click", function () {
         $("#gameSelector option:eq(0)").prop("selected", true);
-        $("#gameMap").hide(200);
-        $(".limits").show();
+        showGameSetting();
     });
     $("#tower").on("click", function () {
         $("#gameSelector option:eq(1)").prop("selected", true);
-        $("#gameMap").hide(200);
-        $(".limits").show();
+        showGameSetting();
     });
     $("#chaudron").on("click", function () {
         $("#gameSelector option:eq(2)").prop("selected", true);
-        $("#gameMap").hide(200);
-        $(".limits").show();
+        showGameSetting();
     });
     $("#castle").on("click", function () {
         $("#gameSelector option:eq(3)").prop("selected", true);
-        $("#gameMap").hide(200);
-        $(".limits").show();
+        showGameSetting();
     });
     $("#ChampionsCup").on("click", function () {
         $("#gameSelector option:eq(4)").prop("selected", true);
-        $("#gameMap").hide(200);
-        $(".limits").show();
+        showGameSetting();
     });
 
     $(".options").on("click", function () {
@@ -98,9 +108,33 @@ $.when($.ready).then(function () {
         let options = new Options();
         $(".gameSettings").hide();
         game = new Game(gameType, difficultyLevel, nbQuestions, options);
-        nextQuestion(game, index);
+        $(".gameSettings").hide(100);
+        nextQuestion(game);
         startSound.play();
         $(".gameArea").show();
+        startCountdown(game.totalTime);
+        $("#answer").trigger("focus");
+    });
+    // Check answer and get the next one:
+    $("#checkAnswer").on("click", function () {
+        checkAnswerGoNext(game);
+    });
+    $("#answer").on("keypress", function (event) {
+        // Check if the key pressed is Enter (key code 13)
+        if (event.which === 13) {
+            event.preventDefault();
+            if ($(this).val().trim() !== "") {
+                checkAnswerGoNext(game);
+            }
+        }
+    });
+    $(".NewGame").on("click", function () {
+        $(".gameComplete").hide();
+        $("#gameMap").show(500);
+    });
+    $(".changePlayer").on("click", function () {
+        $(".gameComplete").hide();
+        $(".players").show(500);
     });
 });
 
@@ -118,10 +152,10 @@ function Game(gameType, difficultyLevel, nbQuestions, options) {
     // Number of seconds the player has to answer the question
     switch (difficultyLevel) {
         case "1":
-            time = 100;
+            time = 30;
             break;
         case "2":
-            time = 30;
+            time = 20;
             break;
         case "3":
             time = 10;
@@ -160,15 +194,21 @@ function Game(gameType, difficultyLevel, nbQuestions, options) {
                 let firstRand = Math.floor(Math.random() * (max - min + 1)) + min;
                 let secondRand = Math.floor(Math.random() * (max - min + 1)) + min;
                 // if negative results are allowed the order can be random, else, the biggest number must always be first.
-                if (firstRand > secondRand || options.positif) {
+                let positif = (options.positif == "on") ? true : false;
+                if (positif) {
+                    if (firstRand > secondRand) {
+                        rand1.push(firstRand);
+                        rand2.push(secondRand);
+                    } else {
+                        rand1.push(secondRand);
+                        rand2.push(firstRand);
+                    }
+                } else {
                     rand1.push(firstRand);
                     rand2.push(secondRand);
-                } else {
-                    rand1.push(secondRand);
-                    rand2.push(firstRand);
                 }
                 operator.push(" - ");
-                results.push(firstRand - secondRand);
+                results.push(rand1[i] - rand2[i]);
                 challenge.push(rand1[i] + operator[i] + rand2[i]);
             }
             break;
@@ -176,10 +216,10 @@ function Game(gameType, difficultyLevel, nbQuestions, options) {
             question = "Multiplie ces chiffres:"
             for (let i = 0; i < nbQuestions; i++) {
                 let firstRand = Math.floor(Math.random() * (max - min + 1)) + min;
- // selects randomly one of the multiplication tables activated.
+                // selects randomly one of the multiplication tables activated.
                 let tables = options.tables.split(',');
                 let secondRand = Math.floor(Math.random() * (tables.length - 0)) + min;
-                secondRand = tables[secondRand]; 
+                secondRand = tables[secondRand];
                 rand1.push(firstRand);
                 rand2.push(secondRand);
                 operator.push(" x ");
@@ -188,10 +228,13 @@ function Game(gameType, difficultyLevel, nbQuestions, options) {
             }
             break;
         case "div":
-            question = "divise ces chiffres:"
+            question = "Divise ces chiffres:"
             for (let i = 0; i < nbQuestions; i++) {
                 let firstRand = Math.floor(Math.random() * (max - min + 1)) + min;
                 let secondRand = Math.floor(Math.random() * (max - min + 1)) + min;
+                // Avoid dividing by zero. todo: Loop through rands later to get a better question.
+                if (firstRand == 0) { firstRand++; }
+                if (secondRand == 0) { secondRand++; }
                 let first = firstRand * secondRand;
                 rand1.push(first);
                 rand2.push(firstRand);
@@ -247,8 +290,7 @@ function playerNameExists(name) {
     return val;
 }
 
-function nextQuestion(game, index) {
-    $(".gameSettings").hide(100);
+function nextQuestion(game) {
     if (index >= game.nbQuestions) {
         gameComplete();
         return;
@@ -256,10 +298,78 @@ function nextQuestion(game, index) {
     $(".question").html(`<h2>${game.question}</h2>`);
     const challenge = game.challenge[index];
     $(".challenge").html(challenge);
+    $("#answer").val("");
+    $("#answer").trigger("focus");
+
+}
+
+function checkAnswerGoNext(game) {
+    let answer = $("#answer").val();
+    if (answer == parseInt(game.results[index])) {
+        successSound.play();
+        index++;
+        playerScore++;
+    } else {
+        errorSound.play();
+        errors++;
+    }
+    nextQuestion(game);
 }
 /**
  * the last question has been answered. Time to tally up the score and give a rating. 
 */
 function gameComplete() {
+    bg_sound.pause();
+    soundOn = false;
+    $(".gameArea").hide();
+    $(".question").html("");
+    $(".challenge").html("");
+    $("#answer").val("");
+    // Compute the score
+    let timeLeftPercent = (game.totalTime - timeLeft) / game.totalTime;
+    let timeBonus = Math.ceil(playerScore * timeLeftPercent);
+    let errorPercent = errors / game.nbQuestions;
+    let errorPenalty = Math.ceil(playerScore * (errorPercent));
+    let finalScore = playerScore + timeBonus - errorPenalty;
+    $(".gameComplete").show(200);
+    $("#score").html(`Your score: ${playerScore}`);
+    $("#timeBonus").html(`Bonus Vitesse: ${timeBonus}`);
+    $("#errors").html(`Erreurs: ${errors}`);    
+    $("#errorPenalities").html(`Pénalité: ${errorPenalty}`);
+    $("#finalScore").html(`Score final: ${finalScore}`);
+    if (errors > game.nbQuestions / 3) {
+        $("#eval").html(`${player} est une <b>Banane</b>!`);
+        badScoreSound.play();
+    } else {
+        $("#eval").html(`${player} est un <b>Génie</b>!`);
+        welldoneSound.play();
+    }
+    playerScore = 0;
+    errors = 0;
+    index = 0;
+    game = null;
+    difficultyLevel = 0;
+}
+function showGameSetting() {
+    $("#gameMap").hide(200);
+    $(".limits").show();
+    $(".gameSettings").show();
+}
 
+// Countdown timer function
+function startCountdown(totalTime) {
+    const countdownDiv = $(".countdown");
+    countdownDiv.css("width", "100%");
+    timeLeft = totalTime;
+    const interval = setInterval(() => {
+        const percentage = (timeLeft / totalTime) * 100;
+        countdownDiv.css("width", percentage + "%");
+        timeLeft--;
+
+        if (timeLeft < 0) {
+            clearInterval(interval);
+            countdownDiv.css("width", "0%");
+            gameComplete()
+        }
+    }, 1000);
 }

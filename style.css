@@ -1,3 +1,6 @@
+:root{
+  --blockwidth: 80%;
+}
 * {
   box-sizing: border-box;
 }
@@ -12,7 +15,8 @@ body {
   font-size: 20px;
 }
 .main {
-  width: 800px;
+  min-width: 35rem; 
+  max-width: 50rem;
   margin: 1rem auto;
   border-radius: 1rem;
   background-color: rgba(27, 26, 26, 0.541);
@@ -21,7 +25,7 @@ body {
 }
 .players {
   display: block;
-  width: 80%;
+  width: var(--blockwidth);
   margin: 0.4rem auto;
   background-color: rgba(36, 36, 36, 0.7);
   padding: 1rem;
@@ -65,13 +69,13 @@ body {
   color: white;
   margin: 0.5rem auto;
   text-align: center;
-  width: 80%;
+  width: var(--blockwidth);
   letter-spacing: 0.4rem;
   font-size: x-large;
 }
 .gameSettings {
   display: none;
-  width: 80%;
+  width: var(--blockwidth);
   margin: 0.4rem auto;
   background-color: rgba(36, 36, 36, 0.7);
   padding: 1rem;
@@ -147,7 +151,7 @@ body {
 }
 .gameArea {
   display: none;
-  width: 80%;
+  width: var(--blockwidth);
   margin: 0.4rem auto;
   background-color: rgba(36, 36, 36, 0.7);
   padding: 1rem;
@@ -176,7 +180,7 @@ body {
   }
 }
 #timer {
-  width: 80%;
+  width: var(--blockwidth);
   height: 1.5rem;
   margin: 0rem auto;
   background-color: rgba(36, 36, 36, 0.555);
@@ -192,7 +196,7 @@ body {
 }
 .gameComplete {
   display: none;
-  width: 80%;
+  width: var(--blockwidth);
   margin: 0.4rem auto;
   background-color: rgba(36, 36, 36, 0.7);
   padding: 1rem 1rem 2rem 4rem;
@@ -220,3 +224,21 @@ body {
     color: rgba(3, 32, 9, 0.712);
   }
 }
+@media screen and (max-width: 700px) {
+  :root{
+    --blockwidth: 96%;
+  }
+	.main{
+		min-width: 25rem;
+		max-width: 100%;
+	}
+	#gameMap{
+		width: 100%;
+		left:0;
+		svg{
+			width: 100%;
+			aspect-ratio: 1;
+		}
+	}
+}
+
